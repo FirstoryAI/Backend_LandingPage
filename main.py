@@ -7,6 +7,7 @@ import resend
 from email_service import send_welcome_email
 from apscheduler.schedulers.background import BackgroundScheduler
 from release_scheduler import send_release_reminders
+from fastapi.middleware.cors import CORSMiddleware
 
 from dotenv import load_dotenv
 
@@ -32,6 +33,19 @@ app = FastAPI(
 
 scheduler = BackgroundScheduler(
     timezone="Asia/Seoul"
+)
+
+#CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "https://firstory-landing.vercel.app",
+        "http://localhost:3000",
+        "http://localhost:5173",
+    ],
+    allow_credentials=True,
+    allow_methods=["POST"],
+    allow_headers=["*"],
 )
 
 

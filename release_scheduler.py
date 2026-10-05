@@ -11,6 +11,7 @@ from models import Subscriber, EmailLog
 load_dotenv()
 
 resend.api_key = os.getenv("RESEND_API_KEY")
+EMAIL_FROM = os.getenv("EMAIL_FROM")
 
 
 def is_release_reminder_day() -> bool:
@@ -27,7 +28,7 @@ def is_release_reminder_day() -> bool:
 
 def send_release_reminder(recipient: str):
     return resend.Emails.send({
-        "from": "onboarding@resend.dev",
+        "from": EMAIL_FROM,
         "to": [recipient],
         "subject": "Firstory 출시가 3일 앞으로 다가왔습니다!",
         "html": """

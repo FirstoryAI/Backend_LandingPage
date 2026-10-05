@@ -1,16 +1,16 @@
 import os
-
 import resend
 from dotenv import load_dotenv
 
 load_dotenv()
 
 resend.api_key = os.getenv("RESEND_API_KEY")
+EMAIL_FROM = os.getenv("EMAIL_FROM")
 
 
 def send_welcome_email(recipient: str):
     response = resend.Emails.send({
-        "from": "onboarding@resend.dev",
+        "from": EMAIL_FROM,
         "to": [recipient],
         "subject": "FIRSTORY 서비스 사전 등록이 완료됐어요!",
         "html": f"""
