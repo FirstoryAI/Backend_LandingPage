@@ -5,6 +5,8 @@ from sqlalchemy.exc import IntegrityError
 import os
 import resend
 from email_service import send_welcome_email
+from apscheduler.schedulers.background import BackgroundScheduler
+from release_scheduler import send_release_reminders
 
 from dotenv import load_dotenv
 
@@ -28,11 +30,34 @@ app = FastAPI(
     version="0.1.0"
 )
 
+scheduler = BackgroundScheduler(
+    timezone="Asia/Seoul"
+)
+
 
 # 데이터베이스 테이블 생성
 @app.on_event("startup")
-def create_tables():
+def startup():
     Base.metadata.create_all(bind=engine)
+
+    scheduler.add_job(
+        send_release_reminders,
+        "cron",
+        hour=9,
+        minute=0,
+        id="release_reminder",
+        replace_existing=True
+    )
+
+    scheduler.start()
+
+    print("Release reminder scheduler started.")
+
+@app.on_event("shutdown")
+def shutdown():
+    scheduler.shutdown()
+
+    print("Release reminder scheduler stopped.")    
 
 
 @app.get("/")
