@@ -251,7 +251,7 @@ def create_feedback(
     db: Session = Depends(get_db)
 ):
     feedback = Feedback(
-        email=request.email.lower(),
+        email=request.email.lower() if request.email else None,
         rating=request.rating
     )
 

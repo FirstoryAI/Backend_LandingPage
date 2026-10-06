@@ -79,7 +79,7 @@ class Feedback(Base):
     __tablename__ = "feedbacks"
 
     id = Column(Integer, primary_key=True, index=True)
-    email = Column(String(255), nullable=False, index=True)
+    email = Column(String(255), nullable=True, index=True)
     rating = Column(String(50), nullable=False)
     created_at = Column(
         DateTime(timezone=True),
