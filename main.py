@@ -1,4 +1,5 @@
-from fastapi import FastAPI, Depends, HTTPException, Header
+from fastapi import FastAPI, Depends, HTTPException
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -218,30 +219,19 @@ def test_email():
 
 
 #admin 인증 함수
+security = HTTPBearer()
+
+
 def verify_admin_token(
-    authorization: str | None = Header(default=None)
+    credentials: HTTPAuthorizationCredentials = Depends(security)
 ):
-    if not authorization:
-        raise HTTPException(
-            status_code=401,
-            detail="Authorization header가 필요합니다."
-        )
-
-    if not authorization.startswith("Bearer "):
-        raise HTTPException(
-            status_code=401,
-            detail="Bearer Token 형식이 필요합니다."
-        )
-
-    token = authorization.replace("Bearer ", "", 1)
-
-    if token != ADMIN_TOKEN:
+    if credentials.credentials != ADMIN_TOKEN:
         raise HTTPException(
             status_code=401,
             detail="유효하지 않은 관리자 토큰입니다."
         )
 
-    return True    
+    return True 
 
 @app.get("/api/admin/emails", response_model=list[SubscriberListResponse])
 def get_subscribers(
