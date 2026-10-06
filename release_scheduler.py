@@ -1,5 +1,6 @@
 import os
-from datetime import date, timedelta
+from datetime import date, datetime, timedelta
+from zoneinfo import ZoneInfo
 
 import resend
 from dotenv import load_dotenv
@@ -23,7 +24,8 @@ def is_release_reminder_day() -> bool:
     release_date = date.fromisoformat(release_date_str)
     reminder_date = release_date - timedelta(days=3)
 
-    return date.today() == reminder_date
+    today = datetime.now(ZoneInfo("Asia/Seoul")).date()
+    return today == reminder_date
 
 
 def send_release_reminder(recipient: str):
