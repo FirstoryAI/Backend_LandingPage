@@ -22,11 +22,14 @@ if not ADMIN_TOKEN:
     raise RuntimeError("ADMIN_TOKEN 환경변수가 설정되지 않았습니다.")
 
 from database import engine, Base, get_db
-from models import Subscriber, EmailLog
+from models import Subscriber, EmailLog, Feedback
 from schemas import (
     SubscriberCreate,
     SubscriberResponse,
-    SubscriberListResponse
+    SubscriberListResponse,
+    FeedbackCreate,
+    FeedbackResponse
+
 )
 
 import models
@@ -240,3 +243,20 @@ def get_subscribers(
 ):
     subscribers = db.query(Subscriber).order_by(Subscriber.id.desc()).all()
     return subscribers 
+
+#가격 피드백 수집
+@app.post("/api/feedback", response_model=FeedbackResponse)
+def create_feedback(
+    request: FeedbackCreate,
+    db: Session = Depends(get_db)
+):
+    feedback = Feedback(
+        email=request.email.lower(),
+        rating=request.rating
+    )
+
+    db.add(feedback)
+    db.commit()
+    db.refresh(feedback)
+
+    return feedback
