@@ -11,6 +11,7 @@ from release_scheduler import send_release_reminders
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi import Header
 
+
 from dotenv import load_dotenv
 
 load_dotenv()
@@ -62,6 +63,9 @@ app.add_middleware(
 @app.on_event("startup")
 def startup():
     Base.metadata.create_all(bind=engine)
+
+    with engine.begin() as conn:
+        conn.execute(text("ALTER TABLE feedbacks ALTER COLUMN email DROP NOT NULL"))
 
     scheduler.add_job(
         send_release_reminders,
