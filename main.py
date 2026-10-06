@@ -1,4 +1,4 @@
-from fastapi import FastAPI, Depends, HTTPException
+from fastapi import FastAPI, Depends, HTTPException, Header
 from sqlalchemy import text
 from sqlalchemy.orm import Session
 from sqlalchemy.exc import IntegrityError
@@ -8,12 +8,17 @@ from email_service import send_welcome_email
 from apscheduler.schedulers.background import BackgroundScheduler
 from release_scheduler import send_release_reminders
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi import Header
 
 from dotenv import load_dotenv
 
 load_dotenv()
 
 resend.api_key = os.getenv("RESEND_API_KEY")
+ADMIN_TOKEN = os.getenv("ADMIN_TOKEN")
+
+if not ADMIN_TOKEN:
+    raise RuntimeError("ADMIN_TOKEN 환경변수가 설정되지 않았습니다.")
 
 from database import engine, Base, get_db
 from models import Subscriber, EmailLog
@@ -184,20 +189,6 @@ def subscribe_email(
         )    
 
 
-@app.get(
-    "/api/admin/emails",
-    response_model=list[SubscriberListResponse]
-)
-def get_subscribers(
-    db: Session = Depends(get_db)
-):
-    subscribers = db.query(Subscriber).order_by(
-        Subscriber.id.desc()
-    ).all()
-
-    return subscribers    
-
-
 #테스트용 이메일 API
 @app.post("/api/test-email")
 def test_email():
@@ -224,3 +215,38 @@ def test_email():
             "message": "이메일 발송에 실패했습니다.",
             "error": str(e)
         }
+
+
+#admin 인증 함수
+def verify_admin_token(
+    authorization: str | None = Header(default=None)
+):
+    if not authorization:
+        raise HTTPException(
+            status_code=401,
+            detail="Authorization header가 필요합니다."
+        )
+
+    if not authorization.startswith("Bearer "):
+        raise HTTPException(
+            status_code=401,
+            detail="Bearer Token 형식이 필요합니다."
+        )
+
+    token = authorization.replace("Bearer ", "", 1)
+
+    if token != ADMIN_TOKEN:
+        raise HTTPException(
+            status_code=401,
+            detail="유효하지 않은 관리자 토큰입니다."
+        )
+
+    return True    
+
+@app.get("/api/admin/emails", response_model=list[SubscriberListResponse])
+def get_subscribers(
+    db: Session = Depends(get_db),
+    _: bool = Depends(verify_admin_token)
+):
+    subscribers = db.query(Subscriber).order_by(Subscriber.id.desc()).all()
+    return subscribers 
